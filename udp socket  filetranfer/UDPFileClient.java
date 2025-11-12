@@ -39,7 +39,6 @@ public class UDPFileClient {
     }
 }
 
-
 /*
 ===================================================================================
                     COMPREHENSIVE UDP CLIENT THEORY AND LINE-BY-LINE EXPLANATION
@@ -132,7 +131,7 @@ FileInputStream:
 FileOutputStream:
 - Writes data to files as bytes
 - Sequential writing (overwrites existing content)
-- Buffer-based writing for efficiency
+- Buffer-based reading for efficiency
 - Must be closed to ensure data is flushed
 
 THREADING CONSIDERATIONS:
@@ -238,8 +237,8 @@ REAL-WORLD CONSIDERATIONS:
 ===================================================================================
                     DUPLICATED CODE WITH LINE-BY-LINE COMMENTS
 ===================================================================================
-*/
 
+/*
 // Line 1: Import all classes from java.io package for file operations
 import java.io.*;
 // Line 2: Import all classes from java.net package for network operations
@@ -309,3 +308,4 @@ public class UDPFileClient {
         }
     }
 }
+*/

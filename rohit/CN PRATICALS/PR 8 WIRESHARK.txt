@@ -1,0 +1,206 @@
+wireshark Pratical 
+
+
+1. Open Wireshark on your system.
+2. Select the active network interface (Ethernet or Wi-Fi).
+3. Once selected, Wireshark will start capturing packets.
+4. Log in to your Facebook account only after Wireshark is running.
+5. Open the Command Prompt and run:
+ping facebook.com this will give you Facebook address
+(eg for my machine 163.70.144.35 / 157.240.237.35)
+
+
+6. In Wireshark, apply a filter to capture only Facebook packets:
+tcp && ip.addr == 163.70.144.35 (Facebook id)
+
+7. To verify, open your browser and enter the same IP address. If it opens
+Facebook, you know the captured packets belong to Facebook.
+
+
+B. Capture all HTTP traffic to/from Facebook (other website), when you log in to your
+Facebook account
+
+
+1. 1st you need to open http website like techpanda.org
+2. you have to enter any sample email & enter password and click on submit
+
+3. Open cmd and give command and ping techpanda.org then you will get connectivity
+with
+5. http && ip.addr==10.30.74.132 (Machine IP) && ip.addr==271.174.153.52
+(techpanda.org ip) (imp command )
+
+3 & 4. Write a DISPLAY filter expression to count all TCP packets (captured under item
+#1)
+that have the flags SYN, PSH, and RST set. Show the fraction of packets that had each
+flag set.
+
+tcp.flags.syn==1
+tcp.flags.push == 1
+tcp.flags.reset == 1
+
+
+
+===========================================================================================================================================
+
+
+🧠 Wireshark Practical Viva Questions and Answers
+🟩 Level 1: Very Basic Questions
+
+Q1. What is Wireshark?
+A: Wireshark is a network protocol analyzer used to capture and analyze network packets in real-time. It helps in monitoring and troubleshooting network traffic.
+
+Q2. What is the purpose of using Wireshark in networking?
+A: Wireshark is used to view detailed information about network traffic such as source and destination IPs, ports, protocols, and payloads. It helps in diagnosing network issues, security analysis, and learning network behavior.
+
+Q3. What are packets in networking?
+A: A packet is a small unit of data transmitted over a network. Each packet contains a header (with control information) and payload (actual data).
+
+Q4. What is a protocol?
+A: A protocol is a set of rules that define how data is transmitted and received over a network (e.g., TCP, IP, HTTP, FTP).
+
+Q5. What are the main layers of the OSI model related to Wireshark capture?
+A: Wireshark mainly captures and analyzes data at the Network Layer (IP), Transport Layer (TCP/UDP), and Application Layer (HTTP, DNS, etc.).
+
+Q6. What is the difference between IP and MAC address?
+A:
+
+IP address identifies a device on a network (logical address).
+
+MAC address identifies a device’s hardware interface (physical address).
+
+Q7. What are Ethernet and Wi-Fi in Wireshark?
+A: They are network interfaces. Ethernet is for wired connections, and Wi-Fi is for wireless connections — both can be selected in Wireshark to capture packets.
+
+
+🟩 Level 2: Basic Practical Questions
+
+Q8. What happens when you start capturing packets in Wireshark?
+A: Wireshark begins recording all network packets passing through the selected network interface in real time.
+
+Q9. What command is used to find Facebook’s IP address?
+A:
+ping facebook.com
+This displays the IP address of Facebook’s server.
+
+Q10. How do you filter packets from Facebook in Wireshark?
+A:
+You can use a display filter like:
+tcp && ip.addr == <Facebook_IP>
+Example: tcp && ip.addr == 157.240.237.35
+
+Q11. What does the tcp keyword in Wireshark filter mean?
+A: It filters all packets that use the Transmission Control Protocol (TCP).
+
+Q12. What is the difference between a capture filter and a display filter?
+A:
+
+Capture Filter: Used before starting capture — limits what packets Wireshark records.
+
+Display Filter: Used after capture — shows only selected packets from the captured data.
+
+Q13. What is the filter used to capture HTTP traffic?
+A:
+http
+It displays only HTTP packets.
+
+Q14. What is the filter to capture HTTP traffic between your machine and techpanda.org?
+A:
+http && ip.addr==<Your_IP> && ip.addr==<techpanda_IP>
+
+Q15. What is the purpose of using TCP flags?
+A: TCP flags are used to manage the connection state between sender and receiver — they indicate actions like connection setup, data push, or termination.
+
+
+🟩 Level 3: Basic Technical Questions (Concept + Filters)
+
+Q16. What does the TCP SYN flag indicate?
+A: It indicates the start of a TCP connection — used during the three-way handshake.
+
+Q17. What does the TCP PSH (Push) flag indicate?
+A: It instructs the receiver to process the data immediately instead of buffering it.
+
+Q18. What does the TCP RST (Reset) flag indicate?
+A: It signals to immediately terminate a connection due to an error or unexpected condition.
+
+Q19. Write display filter expressions for SYN, PSH, and RST flags.
+A:
+
+SYN: tcp.flags.syn==1
+
+PSH: tcp.flags.push==1
+
+RST: tcp.flags.reset==1
+
+Q20. How do you count the number of packets with SYN flag set?
+A: Apply the filter tcp.flags.syn==1, then look at the status bar or Packet List count in Wireshark to see how many packets match.
+
+Q21. What is the significance of counting TCP flags in analysis?
+A:
+
+SYN → number of connection initiations.
+
+PSH → data transfer activity.
+
+RST → connection errors or resets.
+
+Q22. How do you identify whether the packets are HTTP or HTTPS?
+A:
+
+HTTP uses port 80 and can be read as plain text.
+
+HTTPS uses port 443 and data is encrypted.
+
+Q23. Can Wireshark capture encrypted data?
+A: Yes, Wireshark can capture encrypted packets (like HTTPS), but it cannot decrypt them without the encryption keys.
+
+Q24. What is the difference between IP and TCP protocol in a packet?
+A:
+
+IP handles addressing and routing between hosts.
+
+TCP handles reliable data transfer, sequencing, and flow control.
+
+Q25. What is the purpose of applying filters like ip.addr == 157.240.237.35?
+A: It restricts the view to packets going to or coming from a specific IP address (like Facebook’s server).
+
+
+🟩 Level 4: Output & Observation Questions
+
+Q26. How do you know that captured packets belong to Facebook?
+A: If you open the IP address found via ping in your browser and it leads to Facebook, then packets with that IP belong to Facebook.
+
+Q27. How do you count total TCP packets sent to/from Facebook?
+A: Apply the filter tcp && ip.addr == <Facebook_IP> and check the packet count at the bottom of Wireshark.
+
+Q28. How do you count total HTTP packets sent to/from Facebook or techpanda.org?
+A: Apply the filter http && ip.addr == <Website_IP> and note the count.
+
+Q29. What is the difference between Facebook and Techpanda in this experiment?
+A:
+
+Facebook uses HTTPS (encrypted) → data unreadable.
+
+Techpanda uses HTTP (non-encrypted) → data visible (like login credentials).
+
+Q30. What information can you see in HTTP packets?
+A:
+You can view Request methods (GET/POST), URL, Host, User-Agent, and even form data (email/password) if it’s unencrypted.
+
+
+
+🟩 Level 5: Concept + Real-World Understanding
+
+Q31. What is the importance of HTTPS in security?
+A: HTTPS encrypts the data using SSL/TLS so that login details or personal data cannot be read by attackers through packet capture tools like Wireshark.
+
+Q32. Why should we run Wireshark as administrator/root?
+A: Because capturing packets requires access to the network interface in promiscuous mode, which needs administrative privileges.
+
+Q33. What is the use of “promiscuous mode” in Wireshark?
+A: It allows Wireshark to capture all packets on the network, not just those addressed to your computer.
+
+Q34. What are some common protocols you can observe in Wireshark?
+A: TCP, UDP, IP, HTTP, HTTPS, DNS, ARP, ICMP, etc.
+
+Q35. Can Wireshark be used for malicious activity?
+A: Yes, if misused — Wireshark can be used for sniffing sensitive data. That’s why it should be used ethically and only on networks you have permission to analyze.

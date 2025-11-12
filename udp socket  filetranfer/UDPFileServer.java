@@ -32,7 +32,6 @@ public class UDPFileServer {
     }
 }
 
-
 /*
 ===================================================================================
                     COMPREHENSIVE TCP/UDP NETWORKING THEORY AND EXPLANATION
@@ -336,14 +335,14 @@ IMPROVEMENTS THAT COULD BE MADE:
 - Implement retry mechanism for lost packets
 - Add compression for large files
 - Include authentication mechanism
-
+*/
 
 /*
 ===================================================================================
                     DUPLICATED CODE WITH LINE-BY-LINE COMMENTS
 ===================================================================================
-*/
 
+/*
 // Line 1: Import all classes from java.io package for file input/output operations
 import java.io.*;
 // Line 2: Import all classes from java.net package for network communication
@@ -401,3 +400,4 @@ public class UDPFileServer {
         }
     }
 }
+*/

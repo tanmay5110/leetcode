@@ -1,0 +1,738 @@
+import ipaddress
+
+def getip(ip):
+    firstoctet = int(ip.split('.')[0])
+    if 1 <= firstoctet <= 126:
+        return "A"
+    elif 128 <= firstoctet <= 191:
+        return "B"
+    elif 192 <= firstoctet <= 223:
+        return "C"
+    else:
+        return "Invalid or Reserved"
+
+def main():
+    defaultcidr = "192.168.19.0/26"
+    network = ipaddress.IPv4Network(defaultcidr, strict=False)
+    print("Subnetting Program")
+    print(f"Default IP and Subnet: {defaultcidr}")
+
+    ipclass = getip(str(network.network_address))
+    print(f"IP CLASS: {ipclass}")
+    subnetmask = network.netmask
+    prefixlength = network.prefixlen
+    print(f"Subnet Mask: {subnetmask}")
+    print(f"CIDR Notation: {prefixlength}")
+
+    if ipclass == "A":
+        defaultprefix = 8
+    elif ipclass == "B":
+        defaultprefix = 16
+    elif ipclass == "C":
+        defaultprefix = 24
+    else:
+        print("Invalid IP Class.")
+        return
+
+    subnetbits = prefixlength - defaultprefix
+    totalsubnets = 2 ** subnetbits
+    hostbits = 32 - prefixlength
+    totalhosts = 2 ** hostbits
+    usablehosts = totalhosts - 2
+
+    print(f"Subnet Bits Used: {subnetbits}")
+    print(f"Total Number of Subnets: 2^{subnetbits} = {totalsubnets}")
+    print(f"Host Bits Remaining: {hostbits}")
+    print(f"Total IPs per Subnet: 2^{hostbits} = {totalhosts}")
+    print(f"Usable Hosts per Subnet: {usablehosts}")
+
+    print("----- Subnet Table -----")
+    print("Subnet\tFirst IP Address\tLast IP Address")
+    for i, subnet in enumerate(network.subnets(new_prefix=prefixlength)):
+        print(f"Subnet {i+1}\t{subnet.network_address}\t{subnet.broadcast_address}")
+
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Import the ipaddress module to work with IP addresses and networks
+# PURPOSE: Provides built-in classes and functions for IPv4/IPv6 manipulation
+# THEORY: Implements RFC 3987 standards for IP address handling
+import ipaddress
+
+# ============================================================================
+# FUNCTION 1: IP CLASS IDENTIFICATION
+# ============================================================================
+
+def getip(ip):
+    # PURPOSE: Determines the IP class based on the first octet
+    # THEORY: Uses classful addressing scheme defined by RFC 791
+    # INPUT: IP address as string (e.g., "192.168.1.0")
+    # OUTPUT: Returns 'A', 'B', 'C', or 'Invalid or Reserved'
+    """
+    Determines the IP class based on the first octet.
+    
+    Args:
+        ip (str): IP address in string format
+        
+    Returns:
+        str: IP class (A, B, C) or "Invalid or Reserved"
+    """
+    
+    firstoctet = int(ip.split('.')[0])
+    # LINE BREAKDOWN:
+    # - ip.split('.') → Splits IP string by dots: ['192', '168', '1', '0']
+    # - [0] → Extracts first element: '192'
+    # - int() → Converts string to integer: 192
+    # THEORY: First octet determines class in classful addressing
+    # WHY: The range of the first octet defines network size characteristics
+    
+    if 1 <= firstoctet <= 126:
+        return "A"
+    # EXPLANATION: Class A range check (1-126)
+    # THEORY: Class A networks use first 8 bits for network, 24 for hosts
+    # BINARY PATTERN: First bit = 0 (0xxxxxxx)
+    # MATH: 2^24 = 16,777,216 hosts per network
+    # DEFAULT MASK: 255.0.0.0 (/8)
+    # EXAMPLE: 10.0.0.0, 100.50.25.5
+    # WHY: Designed for very large organizations needing many hosts
+    
+    elif 128 <= firstoctet <= 191:
+        return "B"
+    # EXPLANATION: Class B range check (128-191)
+    # THEORY: Class B uses 16 bits network, 16 bits host
+    # BINARY PATTERN: First two bits = 10 (10xxxxxx)
+    # MATH: 2^16 = 65,536 hosts per network
+    # DEFAULT MASK: 255.255.0.0 (/16)
+    # EXAMPLE: 172.16.0.0, 150.100.50.25
+    # WHY: Medium organizations balancing networks vs hosts
+    
+    elif 192 <= firstoctet <= 223:
+        return "C"
+    # EXPLANATION: Class C range check (192-223)
+    # THEORY: Class C uses 24 bits network, 8 bits host
+    # BINARY PATTERN: First three bits = 110 (110xxxxx)
+    # MATH: 2^8 = 256 addresses (254 usable hosts)
+    # DEFAULT MASK: 255.255.255.0 (/24)
+    # EXAMPLE: 192.168.1.0, 200.50.100.0
+    # WHY: Small networks, most common for LANs and home networks
+    
+    else:
+        return "Invalid or Reserved"
+    # EXPLANATION: Catches addresses outside Class A/B/C ranges
+    # INCLUDES:
+    # - 0.x.x.x: "This network" (RFC 1122)
+    # - 127.x.x.x: Loopback addresses (127.0.0.1 = localhost)
+    # - 224-239.x.x.x: Class D (Multicast - one-to-many communication)
+    # - 240-255.x.x.x: Class E (Experimental/Reserved)
+    # WHY: These ranges have special purposes and don't support standard subnetting
+
+# ============================================================================
+# FUNCTION 2: MAIN SUBNETTING LOGIC
+# ============================================================================
+
+def main():
+    # PURPOSE: Main function containing complete subnetting calculations
+    # THEORY: Implements CIDR (Classless Inter-Domain Routing) concepts
+    # PROCESS: Takes a network, calculates subnets, hosts, and displays results
+    
+    defaultcidr = "192.168.19.0/26"
+    # EXPLANATION: Define the default network in CIDR notation
+    # FORMAT: IP_address/prefix_length
+    # BREAKDOWN:
+    # - 192.168.19.0: Network address (base IP)
+    # - /26: Prefix length (26 bits for network portion)
+    # THEORY: CIDR replaces old classful addressing with flexible prefixes
+    # WHY: Allows efficient IP address allocation without class constraints
+    
+    network = ipaddress.IPv4Network(defaultcidr, strict=False)
+    # EXPLANATION: Create an IPv4Network object from CIDR notation
+    # PARAMETERS:
+    # - defaultcidr: The network string to parse
+    # - strict=False: Allows host bits to be set (auto-corrects to network address)
+    # THEORY: IPv4Network class provides methods for network manipulation
+    # WITHOUT strict=False: "192.168.19.5/26" would raise ValueError
+    # WITH strict=False: Automatically converts to "192.168.19.0/26"
+    # WHY: More forgiving input handling, useful for user-provided addresses
+    
+    print("Subnetting Program")
+    # EXPLANATION: Display program title/header
+    # WHY: User interface - indicates program start
+    
+    print(f"Default IP and Subnet: {defaultcidr}")
+    # EXPLANATION: Display the input network in CIDR format
+    # OUTPUT EXAMPLE: "Default IP and Subnet: 192.168.19.0/26"
+    # WHY: Confirms to user what network is being analyzed
+    
+    ipclass = getip(str(network.network_address))
+    # LINE BREAKDOWN:
+    # - network.network_address: Gets the network address as IPv4Address object
+    # - str(): Converts IPv4Address to string format
+    # - getip(): Determines the IP class
+    # EXPLANATION: Identify which class this network belongs to
+    # EXAMPLE: 192.168.19.0 → Class C
+    # WHY: Needed to determine default subnet mask
+    
+    print(f"IP CLASS: {ipclass}")
+    # EXPLANATION: Display the determined IP class
+    # OUTPUT EXAMPLE: "IP CLASS: C"
+    # WHY: Shows classification based on first octet
+    
+    subnetmask = network.netmask
+    # EXPLANATION: Extract subnet mask from the network object
+    # THEORY: Netmask is a 32-bit number separating network and host portions
+    # FORMAT: IPv4Address object (e.g., IPv4Address('255.255.255.192'))
+    # BINARY LOGIC: 1s indicate network bits, 0s indicate host bits
+    # EXAMPLE: /26 = 255.255.255.192 = 11111111.11111111.11111111.11000000
+    
+    prefixlength = network.prefixlen
+    # EXPLANATION: Extract the prefix length (number of network bits)
+    # THEORY: Prefix length indicates how many bits are used for network portion
+    # RANGE: 0-32 for IPv4
+    # EXAMPLE: /26 means 26 network bits, 6 host bits
+    # WHY: Shorter notation than full subnet mask
+    
+    print(f"Subnet Mask: {subnetmask}")
+    # EXPLANATION: Display subnet mask in dotted decimal notation
+    # OUTPUT EXAMPLE: "Subnet Mask: 255.255.255.192"
+    # WHY: Shows the mask in human-readable format
+    
+    print(f"CIDR Notation: {prefixlength}")
+    # EXPLANATION: Display prefix length
+    # OUTPUT EXAMPLE: "CIDR Notation: 26"
+    # WHY: Shows compact representation of subnet mask
+    
+    # ========================================================================
+    # DETERMINE DEFAULT PREFIX BASED ON IP CLASS
+    # ========================================================================
+    
+    if ipclass == "A":
+        defaultprefix = 8
+    # EXPLANATION: Class A default is /8
+    # THEORY: First 8 bits (1 octet) for network
+    # BINARY: 11111111.00000000.00000000.00000000
+    # HOSTS: 24 bits = 2^24 = 16,777,216 addresses
+    # NETWORKS: 126 possible networks (1-126)
+    # WHY: Designed for massive networks
+    
+    elif ipclass == "B":
+        defaultprefix = 16
+    # EXPLANATION: Class B default is /16
+    # THEORY: First 16 bits (2 octets) for network
+    # BINARY: 11111111.11111111.00000000.00000000
+    # HOSTS: 16 bits = 2^16 = 65,536 addresses
+    # NETWORKS: 16,384 possible networks (128.0 to 191.255)
+    # WHY: Balanced for medium-sized organizations
+    
+    elif ipclass == "C":
+        defaultprefix = 24
+    # EXPLANATION: Class C default is /24
+    # THEORY: First 24 bits (3 octets) for network
+    # BINARY: 11111111.11111111.11111111.00000000
+    # HOSTS: 8 bits = 2^8 = 256 addresses (254 usable)
+    # NETWORKS: 2,097,152 possible networks (192.0.0 to 223.255.255)
+    # WHY: Most common for small networks
+    
+    else:
+        print("Invalid IP Class.")
+        return
+    # EXPLANATION: Handle invalid IP classes (D, E, or malformed)
+    # WHY: Cannot perform standard subnetting on special-purpose addresses
+    # ACTION: Exit function gracefully
+    
+    # ========================================================================
+    # SUBNET CALCULATIONS
+    # ========================================================================
+    
+    subnetbits = prefixlength - defaultprefix
+    # EXPLANATION: Calculate how many bits borrowed from host portion
+    # FORMULA: Subnet Bits = New Prefix - Default Prefix
+    # THEORY: Borrowed bits create subnets from the host portion
+    # EXAMPLE: Class C with /26 → 26 - 24 = 2 borrowed bits
+    # MATH PROOF:
+    #   Default /24: NNNNNNNN.NNNNNNNN.NNNNNNNN.HHHHHHHH (N=Network, H=Host)
+    #   New /26:     NNNNNNNN.NNNNNNNN.NNNNNNNN.NNHHHHHH (2 host bits became network)
+    # WHY: Each borrowed bit doubles the number of subnets
+    
+    totalsubnets = 2 ** subnetbits
+    # EXPLANATION: Calculate total number of subnets created
+    # FORMULA: Total Subnets = 2^(Borrowed Bits)
+    # THEORY: Each bit can be 0 or 1, creating binary combinations
+    # EXAMPLE: 2 borrowed bits = 2^2 = 4 subnets
+    # MATH BREAKDOWN:
+    #   Bit pattern: 00, 01, 10, 11 (4 combinations)
+    #   Subnet 1: ...00|HHHHHH
+    #   Subnet 2: ...01|HHHHHH
+    #   Subnet 3: ...10|HHHHHH
+    #   Subnet 4: ...11|HHHHHH
+    # WHY: Exponential growth allows flexible network division
+    
+    hostbits = 32 - prefixlength
+    # EXPLANATION: Calculate remaining bits for host addresses
+    # FORMULA: Host Bits = 32 - Prefix Length
+    # THEORY: IPv4 addresses are 32 bits total
+    # EXAMPLE: /26 → 32 - 26 = 6 host bits
+    # PARTITION: 26 network bits + 6 host bits = 32 total bits
+    # WHY: Determines how many devices can exist in each subnet
+    
+    totalhosts = 2 ** hostbits
+    # EXPLANATION: Calculate total IP addresses per subnet
+    # FORMULA: Total IPs = 2^(Host Bits)
+    # THEORY: Each host bit doubles the address space
+    # EXAMPLE: 6 host bits = 2^6 = 64 total addresses
+    # BINARY COMBINATIONS:
+    #   000000 (0)  → Network Address
+    #   000001 (1)  → First Host
+    #   ...
+    #   111110 (62) → Last Host
+    #   111111 (63) → Broadcast Address
+    # WHY: Shows complete address range including special addresses
+    
+    usablehosts = totalhosts - 2
+    # EXPLANATION: Calculate assignable host addresses
+    # FORMULA: Usable Hosts = Total IPs - 2
+    # THEORY: Subtract network and broadcast addresses
+    # EXAMPLE: 64 total - 2 = 62 usable hosts
+    # RESERVED ADDRESSES:
+    #   1. Network Address (all host bits = 0): Identifies the subnet
+    #   2. Broadcast Address (all host bits = 1): Sends to all hosts
+    # EXAMPLE for 192.168.19.0/26:
+    #   Network: 192.168.19.0 (cannot assign to device)
+    #   Usable: 192.168.19.1 to 192.168.19.62 (can assign)
+    #   Broadcast: 192.168.19.63 (cannot assign to device)
+    # WHY: These addresses have special network functions
+    
+    # ========================================================================
+    # DISPLAY RESULTS
+    # ========================================================================
+    
+    print(f"Subnet Bits Used: {subnetbits}")
+    # EXPLANATION: Display number of bits borrowed
+    # OUTPUT EXAMPLE: "Subnet Bits Used: 2"
+    # WHY: Shows how much of host space was used for subnetting
+    
+    print(f"Total Number of Subnets: 2^{subnetbits} = {totalsubnets}")
+    # EXPLANATION: Display subnet count with formula
+    # OUTPUT EXAMPLE: "Total Number of Subnets: 2^2 = 4"
+    # WHY: Shows both the calculation and result
+    
+    print(f"Host Bits Remaining: {hostbits}")
+    # EXPLANATION: Display remaining host bits
+    # OUTPUT EXAMPLE: "Host Bits Remaining: 6"
+    # WHY: Indicates address space per subnet
+    
+    print(f"Total IPs per Subnet: 2^{hostbits} = {totalhosts}")
+    # EXPLANATION: Display total addresses including special addresses
+    # OUTPUT EXAMPLE: "Total IPs per Subnet: 2^6 = 64"
+    # WHY: Shows complete address range
+    
+    print(f"Usable Hosts per Subnet: {usablehosts}")
+    # EXPLANATION: Display assignable addresses
+    # OUTPUT EXAMPLE: "Usable Hosts per Subnet: 62"
+    # WHY: Most important number for network planning
+    
+    # ========================================================================
+    # SUBNET TABLE GENERATION
+    # ========================================================================
+    
+    print("----- Subnet Table -----")
+    print("Subnet\tFirst IP Address\tLast IP Address")
+    # EXPLANATION: Display table header
+    # WHY: Organizes subnet information in readable format
+    
+    for i, subnet in enumerate(network.subnets(new_prefix=prefixlength)):
+        # LINE BREAKDOWN:
+        # - network.subnets(): Generator method that yields subnet objects
+        # - new_prefix=prefixlength: Specifies the prefix for each subnet
+        # - enumerate(): Adds counter (i) starting from 0
+        # - subnet: IPv4Network object for each subnet
+        
+        # THEORY: Iterates through all possible subnets
+        # EXAMPLE for 192.168.19.0/26:
+        #   Iteration 1: subnet = 192.168.19.0/26
+        #   Iteration 2: subnet = 192.168.19.64/26
+        #   Iteration 3: subnet = 192.168.19.128/26
+        #   Iteration 4: subnet = 192.168.19.192/26
+        
+        # MATHEMATICS: Each subnet increments by the subnet size
+        # INCREMENT = 2^(host bits) = 2^6 = 64
+        # - 192.168.19.0 + 64 = 192.168.19.64
+        # - 192.168.19.64 + 64 = 192.168.19.128
+        # - 192.168.19.128 + 64 = 192.168.19.192
+        
+        print(f"Subnet {i+1}\t{subnet.network_address}\t{subnet.broadcast_address}")
+        # EXPLANATION: Display subnet details in table row
+        # COMPONENTS:
+        # - i+1: Subnet number (human-friendly, starting from 1)
+        # - subnet.network_address: First IP (all host bits = 0)
+        # - subnet.broadcast_address: Last IP (all host bits = 1)
+        
+        # OUTPUT EXAMPLE:
+        # Subnet 1    192.168.19.0      192.168.19.63
+        # Subnet 2    192.168.19.64     192.168.19.127
+        # Subnet 3    192.168.19.128    192.168.19.191
+        # Subnet 4    192.168.19.192    192.168.19.255
+        
+        # BINARY EXPLANATION for 192.168.19.0/26:
+        # Subnet 1: 192.168.19.00|000000 to 192.168.19.00|111111
+        # Subnet 2: 192.168.19.01|000000 to 192.168.19.01|111111
+        # Subnet 3: 192.168.19.10|000000 to 192.168.19.10|111111
+        # Subnet 4: 192.168.19.11|000000 to 192.168.19.11|111111
+        # (| separates subnet bits from host bits)
+
+# ============================================================================
+# PROGRAM ENTRY POINT
+# ============================================================================
+
+if __name__ == "__main__":
+    main()
+# EXPLANATION: Standard Python idiom for script execution
+# THEORY: Ensures main() only runs when script is executed directly
+# WHY: Allows file to be imported as module without auto-execution
+# CONDITION:
+#   - True when: python script.py (direct execution)
+#   - False when: import script (imported as module)
+
+
+"""
+================================================================================
+                    LINE-BY-LINE EXPLANATION WITH THEORY
+================================================================================
+
+NETWORKING THEORY AND CONCEPTS USED:
+-----------------------------------
+
+1. IPv4 ADDRESSING CONCEPTS:
+   - IPv4 uses 32-bit addresses written in dotted decimal notation (x.x.x.x)
+   - Each octet represents 8 bits, ranging from 0-255
+   - IP addresses are divided into Network and Host portions
+
+2. IP ADDRESS CLASSES (Classful Addressing):
+   - Class A: 1.0.0.0 to 126.255.255.255 (Default mask: /8 or 255.0.0.0)
+   - Class B: 128.0.0.0 to 191.255.255.255 (Default mask: /16 or 255.255.0.0)
+   - Class C: 192.0.0.0 to 223.255.255.255 (Default mask: /24 or 255.255.255.0)
+   - Class D: 224.0.0.0 to 239.255.255.255 (Multicast)
+   - Class E: 240.0.0.0 to 254.255.255.255 (Experimental)
+
+3. SUBNET MASKING:
+   - Subnet masks determine which portion is network vs host
+   - Binary representation: 1s for network bits, 0s for host bits
+   - CIDR notation: /n where n is the number of network bits
+
+4. SUBNETTING MATHEMATICS:
+   - Borrowed bits from host portion create subnets
+   - Number of subnets = 2^(borrowed bits)
+   - Hosts per subnet = 2^(remaining host bits) - 2
+   - Subtract 2 for network and broadcast addresses
+
+LINE-BY-LINE EXPLANATION:
+========================
+
+def identify_class_original(ip):
+    # PURPOSE: Determines the class of an IPv4 address based on first octet
+    # THEORY: Uses classful addressing scheme defined by RFC 791
+    
+    try:
+        # EXPLANATION: Exception handling for invalid input
+        # WHY: Prevents program crashes from malformed IP addresses
+        
+        first_octet = int(ip.split('.')[0])
+        # LINE BREAKDOWN:
+        # - ip.split('.') → Splits IP string by dots into list ['192', '168', '1', '0']
+        # - [0] → Gets first element (first octet as string)
+        # - int() → Converts string to integer for numerical comparison
+        # THEORY: First octet determines class in classful addressing
+        
+        if 1 <= first_octet <= 126:
+            return 'A'
+        # EXPLANATION: Class A range check
+        # THEORY: Class A networks use first 8 bits for network, 24 for hosts
+        # MATH: 2^24 = 16,777,216 hosts per network (minus network/broadcast)
+        # WHY: Large organizations need many hosts per network
+        
+        elif 128 <= first_octet <= 191:
+            return 'B'
+        # EXPLANATION: Class B range check  
+        # THEORY: Class B uses 16 bits network, 16 bits host
+        # MATH: 2^16 = 65,536 hosts per network
+        # WHY: Medium organizations balancing networks vs hosts
+        
+        elif 192 <= first_octet <= 223:
+            return 'C'
+        # EXPLANATION: Class C range check
+        # THEORY: Class C uses 24 bits network, 8 bits host  
+        # MATH: 2^8 = 256 addresses (254 usable hosts)
+        # WHY: Small networks, most common for LANs
+        
+        elif 224 <= first_octet <= 239:
+            return 'D (Multicast)'
+        # EXPLANATION: Multicast address range
+        # THEORY: Used for one-to-many communication
+        # WHY: Efficient distribution to multiple receivers
+        
+        elif 240 <= first_octet <= 254:
+            return 'E (Experimental)'
+        # EXPLANATION: Reserved for future use/research
+        # THEORY: RFC 1112 reserves this range
+        # WHY: Allows protocol evolution without conflicts
+        
+        else:
+            return 'Invalid IP'
+        # EXPLANATION: Catches addresses outside valid ranges (0, 127, 255)
+        # THEORY: 0.x.x.x is "this network", 127.x.x.x is loopback
+        
+    except (ValueError, IndexError):
+        return 'Invalid IP'
+        # EXPLANATION: Handles conversion errors and malformed IPs
+        # ValueError: Non-numeric octets
+        # IndexError: Missing octets (e.g., "192.168")
+
+def default_subnet_mask_original(ip_class):
+    # PURPOSE: Returns default subnet mask for each IP class
+    # THEORY: Based on classful addressing standards
+    
+    if ip_class == 'A':
+        return '255.0.0.0', 8
+        # EXPLANATION: Class A default mask
+        # BINARY: 11111111.00000000.00000000.00000000
+        # THEORY: 8 network bits, 24 host bits
+        # MATH: Network portion = first octet only
+        
+    elif ip_class == 'B':
+        return '255.255.0.0', 16
+        # EXPLANATION: Class B default mask
+        # BINARY: 11111111.11111111.00000000.00000000  
+        # THEORY: 16 network bits, 16 host bits
+        # MATH: Network portion = first two octets
+        
+    elif ip_class == 'C':
+        return '255.255.255.0', 24
+        # EXPLANATION: Class C default mask
+        # BINARY: 11111111.11111111.11111111.00000000
+        # THEORY: 24 network bits, 8 host bits
+        # MATH: Network portion = first three octets
+        
+    else:
+        return None, None
+        # EXPLANATION: No default masks for Class D/E or invalid IPs
+        # WHY: These classes don't use traditional subnetting
+
+def subnetting_original(ip, new_prefix):
+    # PURPOSE: Main subnetting calculation function
+    # THEORY: Implements Variable Length Subnet Masking (VLSM)
+    
+    ip_class = identify_class_original(ip)
+    # EXPLANATION: Determine IP class first
+    # WHY: Needed for default mask and validation
+    
+    if ip_class not in ['A', 'B', 'C']:
+        print(f"Subnetting is not applicable for IP Class {ip_class}.")
+        return
+    # EXPLANATION: Only unicast classes support subnetting
+    # THEORY: Multicast/experimental don't use subnet masks
+    
+    default_mask, default_prefix = default_subnet_mask_original(ip_class)
+    # EXPLANATION: Get the natural/default subnet information
+    # WHY: Needed as baseline for subnet calculations
+    
+    if not (default_prefix < new_prefix <= 30):
+        # EXPLANATION: Validate new prefix is logical
+        # THEORY: Must borrow at least 1 bit, leave at least 2 for hosts
+        # MATH: /30 leaves 2 host bits = 4 addresses (2 usable)
+        # WHY: /31 and /32 are special cases not covered here
+        
+        print(f"\nError: Invalid CIDR prefix /{new_prefix} for a Class {ip_class} network (default /{default_prefix}).")
+        print(f"The new prefix must be between /{default_prefix + 1} and /30.")
+        return
+    
+    n_borrowed_bits = new_prefix - default_prefix
+    # EXPLANATION: Calculate how many host bits we're borrowing
+    # THEORY: Borrowed bits become subnet bits
+    # EXAMPLE: Class C (/24) to /26 borrows 2 bits
+    # MATH: 26 - 24 = 2 borrowed bits
+    
+    mask_binary = '1' * new_prefix + '0' * (32 - new_prefix)
+    # EXPLANATION: Create binary representation of new subnet mask
+    # THEORY: Subnet mask is continuous 1s followed by continuous 0s
+    # EXAMPLE: /26 = 11111111111111111111111111000000 (26 ones, 6 zeros)
+    # WHY: 1s identify network portion, 0s identify host portion
+    
+    mask_octets = [int(mask_binary[i:i+8], 2) for i in range(0, 32, 8)]
+    # LINE BREAKDOWN:
+    # - range(0, 32, 8) → Creates [0, 8, 16, 24] for octet positions
+    # - mask_binary[i:i+8] → Extracts 8-bit chunks
+    # - int(..., 2) → Converts binary string to decimal
+    # - List comprehension creates 4 decimal values
+    # EXAMPLE: '11111111111111111111111111000000' becomes [255, 255, 255, 192]
+    
+    new_subnet_mask_str = ".".join(map(str, mask_octets))
+    # EXPLANATION: Convert decimal octets to dotted decimal notation
+    # THEORY: Standard IPv4 address representation
+    # EXAMPLE: [255, 255, 255, 192] becomes "255.255.255.192"
+    
+    total_subnets = 2 ** n_borrowed_bits
+    # EXPLANATION: Calculate number of subnets created
+    # THEORY: Each borrowed bit doubles the number of subnets
+    # MATH: 2^n where n = borrowed bits
+    # EXAMPLE: 2 borrowed bits = 2^2 = 4 subnets
+    
+    ips_per_subnet = 2 ** (32 - new_prefix)
+    # EXPLANATION: Calculate total IP addresses in each subnet
+    # THEORY: Host bits determine subnet size
+    # MATH: 2^h where h = host bits remaining
+    # EXAMPLE: /26 has 6 host bits = 2^6 = 64 addresses
+    
+    assignable_hosts = ips_per_subnet - 2
+    # EXPLANATION: Subtract network and broadcast addresses
+    # THEORY: First IP is network address, last IP is broadcast
+    # WHY: These addresses cannot be assigned to hosts
+    # EXAMPLE: 64 total - 2 reserved = 62 assignable hosts
+
+MATHEMATICAL FORMULAS USED:
+==========================
+
+1. SUBNETS CALCULATION:
+   Number of Subnets = 2^(Borrowed Bits)
+   Where: Borrowed Bits = New Prefix - Default Prefix
+
+2. HOSTS PER SUBNET:
+   Total IPs per Subnet = 2^(Host Bits)
+   Assignable Hosts = 2^(Host Bits) - 2
+   Where: Host Bits = 32 - New Prefix
+
+3. SUBNET MASK CONVERSION:
+   Binary: '1' * Prefix Length + '0' * (32 - Prefix Length)
+   Decimal: Convert each 8-bit group to decimal
+
+4. ADDRESS RANGES:
+   Network Address = IP AND Subnet Mask
+   Broadcast Address = Network Address + (2^Host Bits - 1)
+   First Host = Network Address + 1
+   Last Host = Broadcast Address - 1
+
+NETWORKING CONCEPTS DEMONSTRATED:
+===============================
+
+1. CLASSFUL vs CLASSLESS ADDRESSING:
+   - Original classful system (Classes A, B, C)
+   - Modern CIDR (Classless Inter-Domain Routing)
+   - Variable Length Subnet Masking (VLSM)
+
+2. BINARY MATHEMATICS:
+   - Base-2 number system for network calculations
+   - Bitwise operations (AND, OR)
+   - Powers of 2 for subnet/host calculations
+
+3. NETWORK HIERARCHY:
+   - Network portion (identifies subnet)
+   - Host portion (identifies device within subnet)
+   - Subnet boundaries and broadcast domains
+
+4. ADDRESS CONSERVATION:
+   - Efficient use of IP address space
+   - Subnetting prevents address waste
+   - Allows logical network segmentation
+
+PRACTICAL APPLICATIONS:
+======================
+
+1. NETWORK DESIGN:
+   - Dividing large networks into manageable subnets
+   - Separating departments/functions
+   - Implementing security boundaries
+
+2. ROUTING EFFICIENCY:
+   - Reducing routing table size
+   - Implementing route summarization
+   - Optimizing network performance
+
+3. TROUBLESHOOTING:
+   - Understanding network boundaries
+   - Identifying connectivity issues
+   - Validating network configurations
+
+CROSS-EXAMINATION QUESTIONS:
+===========================
+
+Q1: Why do we subtract 2 from total IPs to get assignable hosts?
+A1: Because the first IP is the network address (identifies the subnet itself) 
+    and the last IP is the broadcast address (used for broadcast communication).
+    Neither can be assigned to individual hosts.
+
+Q2: What happens if we try to subnet a Class D or E address?
+A2: The program correctly rejects this because Class D is for multicast 
+    (one-to-many communication) and Class E is experimental. These don't 
+    use traditional subnet masks.
+
+Q3: Why is the maximum prefix limited to /30?
+A3: A /30 network has only 2 host bits (2^2 = 4 addresses). After subtracting
+    network and broadcast addresses, only 2 addresses remain for hosts.
+    This is the minimum practical subnet size for point-to-point links.
+
+Q4: How does borrowing bits affect network capacity?
+A4: Each borrowed bit doubles the number of subnets but halves the number
+    of hosts per subnet. It's a trade-off between network segmentation
+    and host capacity.
+
+Q5: What's the difference between /24 and 255.255.255.0?
+A5: They represent the same subnet mask in different notations:
+    - /24 is CIDR notation (24 network bits)
+    - 255.255.255.0 is dotted decimal notation
+    - Both mean 24 ones followed by 8 zeros in binary
+
+ADVANCED CONCEPTS:
+=================
+
+1. SUBNETTING STRATEGIES:
+   - Fixed Length Subnet Masking (FLSM)
+   - Variable Length Subnet Masking (VLSM)
+   - Supernetting (route aggregation)
+
+2. MODERN IMPLEMENTATIONS:
+   - IPv6 addressing (128-bit addresses)
+   - Network Address Translation (NAT)
+   - Dynamic Host Configuration Protocol (DHCP)
+
+3. SECURITY IMPLICATIONS:
+   - Broadcast domain isolation
+   - Network segmentation for security
+   - VLAN implementation support
+"""

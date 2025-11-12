@@ -1,0 +1,55 @@
+import ipaddress
+
+def getip(ip):
+    firstoctet = int(ip.split('.')[0])
+    if 1 <= firstoctet <= 126:
+        return "A"
+    elif 128 <= firstoctet <= 191:
+        return "B"
+    elif 192 <= firstoctet <= 223:
+        return "C"
+    else:
+        return "Invalid or Reserved"
+
+def main():
+    defaultcidr = "192.168.19.0/26"
+    network = ipaddress.IPv4Network(defaultcidr, strict=False)
+    print("Subnetting Program")
+    print(f"Default IP and Subnet: {defaultcidr}")
+
+    ipclass = getip(str(network.network_address))
+    print(f"IP CLASS: {ipclass}")
+    subnetmask = network.netmask
+    prefixlength = network.prefixlen
+    print(f"Subnet Mask: {subnetmask}")
+    print(f"CIDR Notation: {prefixlength}")
+
+    if ipclass == "A":
+        defaultprefix = 8
+    elif ipclass == "B":
+        defaultprefix = 16
+    elif ipclass == "C":
+        defaultprefix = 24
+    else:
+        print("Invalid IP Class.")
+        return
+
+    subnetbits = prefixlength - defaultprefix
+    totalsubnets = 2 ** subnetbits
+    hostbits = 32 - prefixlength
+    totalhosts = 2 ** hostbits
+    usablehosts = totalhosts - 2
+
+    print(f"Subnet Bits Used: {subnetbits}")
+    print(f"Total Number of Subnets: 2^{subnetbits} = {totalsubnets}")
+    print(f"Host Bits Remaining: {hostbits}")
+    print(f"Total IPs per Subnet: 2^{hostbits} = {totalhosts}")
+    print(f"Usable Hosts per Subnet: {usablehosts}")
+
+    print("----- Subnet Table -----")
+    print("Subnet\tFirst IP Address\tLast IP Address")
+    for i, subnet in enumerate(network.subnets(new_prefix=prefixlength)):
+        print(f"Subnet {i+1}\t{subnet.network_address}\t{subnet.broadcast_address}")
+
+if __name__ == "__main__":
+    main()
